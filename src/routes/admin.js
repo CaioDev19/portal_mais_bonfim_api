@@ -11,6 +11,16 @@ const {
   CategoryRepository,
 } = require("../category/category.repository.js")
 const { PostSchema } = require("../dto/post.js")
+const { AdvertisingSchema } = require("../dto/advertising.js")
+const {
+  AdvertisingRepository,
+} = require("../advertising/advertising.repository.js")
+const {
+  AdvertisingService,
+} = require("../advertising/advertising.service.js")
+const {
+  AdvertisingController,
+} = require("../advertising/advertising.controller.js")
 
 const router = express.Router()
 const postRepository = new PostRepository()
@@ -20,6 +30,14 @@ const postService = new PostService(
   categoryRepository
 )
 const postController = new PostController(postService)
+
+const advertisingRepository = new AdvertisingRepository()
+const advertisingService = new AdvertisingService(
+  advertisingRepository
+)
+const advertisingController = new AdvertisingController(
+  advertisingService
+)
 
 router.use(Auth)
 
@@ -35,6 +53,17 @@ router.put(
   upload.single("image"),
   ValidatorService.validate(PostSchema),
   postController.updatePostById
+)
+
+router.post(
+  "/advertising",
+  upload.single("image"),
+  ValidatorService.validate(AdvertisingSchema),
+  advertisingController.createAdvertising
+)
+router.post(
+  "/advertising/:id",
+  advertisingController.deleteAdvertisingById
 )
 
 module.exports = router
