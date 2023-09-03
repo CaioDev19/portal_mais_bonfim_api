@@ -2,6 +2,7 @@ const { ApiError } = require("../utils/apiError")
 const { AdvertisingRepository } = require("./advertising.repository")
 const { FirebaseService } = require("../firebase/firebase.service")
 const prismaClient = require("@prisma/client")
+const { Pagination } = require("../utils/pagination")
 
 class AdvertisingService {
   /**
@@ -24,6 +25,73 @@ class AdvertisingService {
         name: imageName,
         url: imageUrl,
       },
+    }
+  }
+
+  /**
+   * @param {import("../utils/pagination").TPagination} pagination
+   * @param {?string} status
+   */
+  async findAdvertisings(pagination, status) {
+    const { limit = 10, page = 1 } = pagination
+
+    try {
+      /** @type {?prismaClient.Advertising[]} */
+      let advertisings = null
+      /** @type {?number} */
+      let count = null
+
+      if (status) {
+        advertisings =
+          await this.advertisingRepository.findAdvertisingsByStatus(
+            {
+              limit,
+              page,
+            },
+            status
+          )
+
+        const {
+          _count: { id: totalAdvertisings },
+        } = await this.advertisingRepository.countAdvertisingByStatus(
+          status
+        )
+
+        count = totalAdvertisings
+      } else {
+        advertisings =
+          await this.advertisingRepository.findAdvertisings({
+            limit,
+            page,
+          })
+
+        const {
+          _count: { id: totalAdvertisings },
+        } = await this.advertisingRepository.countAdvertising()
+
+        count = totalAdvertisings
+      }
+
+      const isPageValid = Pagination.isPaginationValid(count, {
+        limit,
+        page,
+      })
+
+      if (!isPageValid) {
+        throw new ApiError("Page not found", 404)
+      }
+
+      const totalPages = Pagination.calculateTotalPages(count, limit)
+
+      const adsFormated = advertisings?.map((ads) => this.format(ads))
+
+      return {
+        totalPages,
+        currentPage: totalPages === 0 ? 0 : page,
+        advertisings: adsFormated,
+      }
+    } catch (error) {
+      throw error.message
     }
   }
 

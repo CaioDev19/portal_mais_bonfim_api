@@ -3,6 +3,7 @@ const {
 } = require("../category/category.repository.js")
 const { FirebaseService } = require("../firebase/firebase.service.js")
 const { ApiError } = require("../utils/apiError.js")
+const { Pagination } = require("../utils/pagination.js")
 const { PostRepository } = require("./post.repository.js")
 
 class PostService {
@@ -32,6 +33,91 @@ class PostService {
         name: imageName,
         url: image_url,
       },
+    }
+  }
+
+  /**
+   * @param {number} postId
+   */
+  async findPostById(postId) {
+    try {
+      const post = await this.postRepository.findPostById(postId)
+
+      if (!post) {
+        throw new ApiError("Post not found.", 404)
+      }
+
+      return this.formatPost(post)
+    } catch (error) {
+      throw error.message
+    }
+  }
+
+  /**
+   * @param {import("../utils/pagination.js").TPagination} pagination
+   * @param {?number} categoryId
+   */
+  async findPosts(pagination, categoryId) {
+    const { limit = 10, page = 1 } = pagination
+
+    try {
+      /** @type {?import("./post.repository.js").PostWithCategory[]} */
+      let posts = null
+      /** @type {?number} */
+      let count = null
+
+      if (categoryId) {
+        posts =
+          await this.postRepository.findPostsPaginatedByCategoryId(
+            {
+              limit,
+              page,
+            },
+            categoryId
+          )
+
+        const {
+          _count: { id: totalPosts },
+        } = await this.postRepository.countPostsByCategoryId(
+          categoryId
+        )
+
+        count = totalPosts
+      } else {
+        posts = await this.postRepository.findPostsPaginated({
+          limit,
+          page,
+        })
+
+        const {
+          _count: { id: totalPosts },
+        } = await this.postRepository.countPosts()
+
+        count = totalPosts
+      }
+
+      const isPageValid = Pagination.isPaginationValid(count, {
+        limit,
+        page,
+      })
+
+      if (!isPageValid) {
+        throw new ApiError("Page not found", 404)
+      }
+
+      const totalPages = Pagination.calculateTotalPages(count, limit)
+
+      const formatedPosts = posts?.map((post) =>
+        this.formatPost(post)
+      )
+
+      return {
+        totalPages,
+        currentPage: totalPages === 0 ? 0 : page,
+        posts: formatedPosts,
+      }
+    } catch (error) {
+      throw error.message
     }
   }
 

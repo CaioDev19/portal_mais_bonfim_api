@@ -19,6 +19,49 @@ class PostController {
     this.postService = postService
   }
 
+  async listPosts(req, res) {
+    try {
+      const { limit, page, categoryId } = req.params
+      const posts = await this.postService.findPosts(
+        {
+          limit: +limit,
+          page: +page,
+        },
+        categoryId ? +categoryId : null
+      )
+
+      return res.status(200).json(posts)
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return res.status(error?.statusCode).json({
+          message: error.message,
+        })
+      }
+
+      return res.status(500).json({
+        message: error.message,
+      })
+    }
+  }
+
+  async listPostsById(req, res) {
+    try {
+      const { id } = req.params
+      const post = await this.postService.findPostById(+id)
+      return res.status(200).json(post)
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return res.status(error?.statusCode).json({
+          message: error.message,
+        })
+      }
+
+      return res.status(500).json({
+        message: error.message,
+      })
+    }
+  }
+
   async createPost(req, res) {
     try {
       const post = await this.postService.createPost({

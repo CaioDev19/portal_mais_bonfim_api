@@ -13,6 +13,10 @@ class CategoryRepository {
       },
     })
   }
+
+  async findCategories() {
+    return await prisma.category.findMany()
+  }
 }
 
 module.exports = {

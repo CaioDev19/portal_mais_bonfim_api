@@ -1,4 +1,5 @@
 const { prisma } = require("../config/dataBase.js")
+const prismaClient = require("@prisma/client")
 
 /**
  * @typedef {object} AdvertisingCreate
@@ -22,6 +23,14 @@ class AdvertisingRepository {
     })
   }
 
+  async countAdvertising() {
+    return prisma.advertising.aggregate({
+      _count: {
+        id: true,
+      },
+    })
+  }
+
   /**
    * @param {AdvertisingCreate} advertising
    */
@@ -39,6 +48,36 @@ class AdvertisingRepository {
       where: {
         id,
       },
+    })
+  }
+
+  /**
+   * @param {string} status
+   * @param {import("../utils/pagination.js").TPagination} pagination
+   */
+  async findAdvertisingsByStatus(pagination, status) {
+    return await prisma.advertising.findMany({
+      where: {
+        status,
+      },
+      orderBy: {
+        id: "desc",
+      },
+      take: pagination.limit,
+      skip: (pagination.page - 1) * pagination.limit,
+    })
+  }
+
+  /**
+   * @param {import("../utils/pagination.js").TPagination} pagination
+   */
+  async findAdvertisings(pagination) {
+    return await prisma.advertising.findMany({
+      orderBy: {
+        id: "desc",
+      },
+      take: pagination.limit,
+      skip: (pagination.page - 1) * pagination.limit,
     })
   }
 

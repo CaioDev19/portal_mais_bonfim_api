@@ -88,6 +88,66 @@ class PostRepository {
       },
     })
   }
+
+  /**
+   * @param {import("../utils/pagination.js").TPagination} pagination
+   * @returns {Promise<PostWithCategory[] | null>}
+   */
+  async findPostsPaginated(pagination) {
+    return await prisma.post.findMany({
+      orderBy: {
+        date: "desc",
+      },
+      include: {
+        category: true,
+      },
+      take: pagination.limit,
+      skip: (pagination.page - 1) * pagination.limit,
+    })
+  }
+
+  /**
+   * @param {import("../utils/pagination.js").TPagination} pagination
+   * @param {number} categoryId
+   * @returns {Promise<PostWithCategory[] | null>}
+   */
+  async findPostsPaginatedByCategoryId(pagination, categoryId) {
+    return await prisma.post.findMany({
+      where: {
+        category_id: categoryId,
+      },
+      orderBy: {
+        date: "desc",
+      },
+      include: {
+        category: true,
+      },
+      take: pagination.limit,
+      skip: (pagination.page - 1) * pagination.limit,
+    })
+  }
+
+  async countPosts() {
+    return prisma.post.aggregate({
+      _count: {
+        id: true,
+      },
+    })
+  }
+
+  /**
+   * @param {number} categoryId
+   */
+  async countPostsByCategoryId(categoryId) {
+    return prisma.post.aggregate({
+      where: {
+        category_id: categoryId,
+      },
+      _count: {
+        id: true,
+      },
+    })
+  }
 }
 
 module.exports = {

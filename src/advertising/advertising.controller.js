@@ -16,6 +16,32 @@ class AdvertisingController {
     this.advertisingService = advertisingService
   }
 
+  async listAdvertisings(req, res) {
+    try {
+      const { limit, page, status } = req.params
+      const advertisings =
+        await this.advertisingService.findAdvertisings(
+          {
+            limit: +limit,
+            page: +page,
+          },
+          status ? status : null
+        )
+
+      return res.status(200).json(advertisings)
+    } catch (error) {
+      if (error instanceof ApiError) {
+        return res.status(error?.statusCode).json({
+          message: error.message,
+        })
+      }
+
+      return res.status(500).json({
+        message: error.message,
+      })
+    }
+  }
+
   async createAdvertising(req, res) {
     try {
       const advertising =
