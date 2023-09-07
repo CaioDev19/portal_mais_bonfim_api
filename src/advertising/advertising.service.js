@@ -4,14 +4,9 @@ const { FirebaseService } = require("../firebase/firebase.service")
 const prismaClient = require("@prisma/client")
 const { Pagination } = require("../utils/pagination")
 
-class AdvertisingService {
-  /**
-   * @param {AdvertisingRepository} advertisingRepository
-   */
-  constructor(advertisingRepository) {
-    this.advertisingRepository = advertisingRepository
-  }
+const advertisingRepository = new AdvertisingRepository()
 
+class AdvertisingService {
   /**
    * @param {prismaClient.Advertising} advertising
    */
@@ -33,7 +28,17 @@ class AdvertisingService {
    * @param {?string} status
    */
   async findAdvertisings(pagination, status) {
-    const { limit = 10, page = 1 } = pagination
+    let limit =
+      pagination?.limit !== undefined ? +pagination.limit : 10
+    let page = pagination?.page !== undefined ? +pagination.page : 1
+
+    if (isNaN(limit)) {
+      limit = 10
+    }
+
+    if (isNaN(page)) {
+      page = 1
+    }
 
     try {
       /** @type {?prismaClient.Advertising[]} */
@@ -43,7 +48,7 @@ class AdvertisingService {
 
       if (status) {
         advertisings =
-          await this.advertisingRepository.findAdvertisingsByStatus(
+          await advertisingRepository.findAdvertisingsByStatus(
             {
               limit,
               page,
@@ -53,21 +58,20 @@ class AdvertisingService {
 
         const {
           _count: { id: totalAdvertisings },
-        } = await this.advertisingRepository.countAdvertisingByStatus(
+        } = await advertisingRepository.countAdvertisingByStatus(
           status
         )
 
         count = totalAdvertisings
       } else {
-        advertisings =
-          await this.advertisingRepository.findAdvertisings({
-            limit,
-            page,
-          })
+        advertisings = await advertisingRepository.findAdvertisings({
+          limit,
+          page,
+        })
 
         const {
           _count: { id: totalAdvertisings },
-        } = await this.advertisingRepository.countAdvertising()
+        } = await advertisingRepository.countAdvertising()
 
         count = totalAdvertisings
       }
@@ -91,7 +95,7 @@ class AdvertisingService {
         advertisings: adsFormated,
       }
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 
@@ -105,7 +109,7 @@ class AdvertisingService {
       if (status === "Fixo") {
         const {
           _count: { id: fixedAdvertisingCount },
-        } = await this.advertisingRepository.countAdvertisingByStatus(
+        } = await advertisingRepository.countAdvertisingByStatus(
           status
         )
 
@@ -123,7 +127,7 @@ class AdvertisingService {
       )
 
       const advertising =
-        await this.advertisingRepository.createAdvertising({
+        await advertisingRepository.createAdvertising({
           imageName: file.originalname,
           imageUrl,
           status,
@@ -135,7 +139,7 @@ class AdvertisingService {
 
       return this.format(advertising)
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 
@@ -147,9 +151,7 @@ class AdvertisingService {
       const advertisingId = +id
 
       const advertising =
-        await this.advertisingRepository.findAdvertisingById(
-          advertisingId
-        )
+        await advertisingRepository.findAdvertisingById(advertisingId)
 
       if (!advertising) {
         throw new ApiError("Advertising not found.", 404)
@@ -160,7 +162,7 @@ class AdvertisingService {
       )
 
       const deletedAdvertising =
-        await this.advertisingRepository.deleteAdvertisingById(
+        await advertisingRepository.deleteAdvertisingById(
           advertisingId
         )
 
@@ -170,7 +172,7 @@ class AdvertisingService {
 
       return
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 }

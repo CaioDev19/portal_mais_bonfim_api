@@ -1,18 +1,13 @@
 const { CategoryRepository } = require("./category.repository")
 
-class CategoryService {
-  /**
-   * @param {CategoryRepository} categoryRepository
-   */
-  constructor(categoryRepository) {
-    this.categoryRepository = categoryRepository
-  }
+const categoryRepository = new CategoryRepository()
 
+class CategoryService {
   async findCategories() {
     try {
-      return await this.categoryRepository.findCategories()
+      return await categoryRepository.findCategories()
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 }

@@ -6,16 +6,10 @@ const { ApiError } = require("../utils/apiError.js")
 const { Pagination } = require("../utils/pagination.js")
 const { PostRepository } = require("./post.repository.js")
 
-class PostService {
-  /**
-   * @param {PostRepository} postRepository
-   * @param {CategoryRepository} categoryRepository
-   */
-  constructor(postRepository, categoryRepository) {
-    this.postRepository = postRepository
-    this.categoryRepository = categoryRepository
-  }
+const postRepository = new PostRepository()
+const categoryRepository = new CategoryRepository()
 
+class PostService {
   /**
    * @param {import("./post.repository.js").PostWithCategory} post
    */
@@ -41,7 +35,11 @@ class PostService {
    */
   async findPostById(postId) {
     try {
-      const post = await this.postRepository.findPostById(postId)
+      if (isNaN(postId)) {
+        throw new ApiError("Post not found.", 404)
+      }
+
+      const post = await postRepository.findPostById(postId)
 
       if (!post) {
         throw new ApiError("Post not found.", 404)
@@ -49,7 +47,7 @@ class PostService {
 
       return this.formatPost(post)
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 
@@ -58,7 +56,17 @@ class PostService {
    * @param {?number} categoryId
    */
   async findPosts(pagination, categoryId) {
-    const { limit = 10, page = 1 } = pagination
+    let limit =
+      pagination?.limit !== undefined ? +pagination.limit : 10
+    let page = pagination?.page !== undefined ? +pagination.page : 1
+
+    if (isNaN(limit)) {
+      limit = 10
+    }
+
+    if (isNaN(page)) {
+      page = 1
+    }
 
     try {
       /** @type {?import("./post.repository.js").PostWithCategory[]} */
@@ -66,32 +74,31 @@ class PostService {
       /** @type {?number} */
       let count = null
 
-      if (categoryId) {
-        posts =
-          await this.postRepository.findPostsPaginatedByCategoryId(
-            {
-              limit,
-              page,
-            },
-            categoryId
-          )
+      console.log(categoryId)
 
-        const {
-          _count: { id: totalPosts },
-        } = await this.postRepository.countPostsByCategoryId(
+      if (categoryId) {
+        posts = await postRepository.findPostsPaginatedByCategoryId(
+          {
+            limit,
+            page,
+          },
           categoryId
         )
 
+        const {
+          _count: { id: totalPosts },
+        } = await postRepository.countPostsByCategoryId(categoryId)
+
         count = totalPosts
       } else {
-        posts = await this.postRepository.findPostsPaginated({
+        posts = await postRepository.findPostsPaginated({
           limit,
           page,
         })
 
         const {
           _count: { id: totalPosts },
-        } = await this.postRepository.countPosts()
+        } = await postRepository.countPosts()
 
         count = totalPosts
       }
@@ -117,7 +124,7 @@ class PostService {
         posts: formatedPosts,
       }
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 
@@ -128,8 +135,8 @@ class PostService {
     const { category_id, summary, content, title, file } = post
 
     try {
-      const category = await this.categoryRepository.findCategoryById(
-        category_id
+      const category = await categoryRepository.findCategoryById(
+        +category_id
       )
 
       if (!category) {
@@ -141,11 +148,11 @@ class PostService {
         file
       )
 
-      const post = await this.postRepository.createPost({
+      const post = await postRepository.createPost({
         title,
         content,
         summary,
-        category_id,
+        category_id: +category_id,
         imageName: file.originalname,
         imageUrl,
       })
@@ -156,7 +163,8 @@ class PostService {
 
       return this.formatPost(post)
     } catch (error) {
-      throw error.message
+      console.log(error)
+      throw error
     }
   }
 
@@ -165,7 +173,7 @@ class PostService {
    */
   async deletePostById(postId) {
     try {
-      const post = await this.postRepository.findPostById(+postId)
+      const post = await postRepository.findPostById(+postId)
 
       if (!post) {
         throw new ApiError("Post not found.", 404)
@@ -173,9 +181,7 @@ class PostService {
 
       await FirebaseService.deleteImageFromStorage(post.imageName)
 
-      const deletedPost = await this.postRepository.deletePostById(
-        +postId
-      )
+      const deletedPost = await postRepository.deletePostById(+postId)
 
       if (!deletedPost) {
         throw new Error("Error deleting post.")
@@ -183,7 +189,7 @@ class PostService {
 
       return
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 
@@ -196,14 +202,14 @@ class PostService {
     try {
       const { category_id, summary, content, title, file } = newPost
 
-      const oldPost = await this.postRepository.findPostById(+postId)
+      const oldPost = await postRepository.findPostById(+postId)
 
       if (!oldPost) {
         throw new ApiError("Post not found.", 404)
       }
 
-      const category = await this.categoryRepository.findCategoryById(
-        category_id
+      const category = await categoryRepository.findCategoryById(
+        +category_id
       )
 
       if (!category) {
@@ -217,16 +223,16 @@ class PostService {
         file
       )
 
-      return await this.postRepository.updatePostById(+postId, {
+      return await postRepository.updatePostById(+postId, {
         title,
         content,
         summary,
-        category_id,
+        category_id: +category_id,
         imageName: file.originalname,
         imageUrl,
       })
     } catch (error) {
-      throw error.message
+      throw error
     }
   }
 }

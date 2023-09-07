@@ -1,23 +1,11 @@
 const express = require("express")
 const {
-  AdvertisingRepository,
-} = require("../advertising/advertising.repository")
-const {
-  AdvertisingService,
-} = require("../advertising/advertising.service")
-const {
   AdvertisingController,
 } = require("../advertising/advertising.controller")
 
 const router = express.Router()
 
-const advertisingRepository = new AdvertisingRepository()
-const advertisingService = new AdvertisingService(
-  advertisingRepository
-)
-const advertisingController = new AdvertisingController(
-  advertisingService
-)
+const advertisingController = new AdvertisingController()
 
 router.get("/", advertisingController.listAdvertisings)
 

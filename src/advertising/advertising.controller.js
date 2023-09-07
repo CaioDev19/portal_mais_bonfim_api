@@ -8,25 +8,19 @@ const { AdvertisingService } = require("./advertising.service")
  * @property {*} file
  */
 
-class AdvertisingController {
-  /**
-   * @param {AdvertisingService} advertisingService
-   */
-  constructor(advertisingService) {
-    this.advertisingService = advertisingService
-  }
+const advertisingService = new AdvertisingService()
 
+class AdvertisingController {
   async listAdvertisings(req, res) {
     try {
-      const { limit, page, status } = req.params
-      const advertisings =
-        await this.advertisingService.findAdvertisings(
-          {
-            limit: +limit,
-            page: +page,
-          },
-          status ? status : null
-        )
+      const { limit, page, status } = req.query
+      const advertisings = await advertisingService.findAdvertisings(
+        {
+          limit,
+          page,
+        },
+        status ? status : null
+      )
 
       return res.status(200).json(advertisings)
     } catch (error) {
@@ -37,18 +31,17 @@ class AdvertisingController {
       }
 
       return res.status(500).json({
-        message: error.message,
+        message: error,
       })
     }
   }
 
   async createAdvertising(req, res) {
     try {
-      const advertising =
-        await this.advertisingService.createAdvertising({
-          ...req.body,
-          file: req.file,
-        })
+      const advertising = await advertisingService.createAdvertising({
+        ...req.body,
+        file: req.file,
+      })
 
       return res.status(201).json(advertising)
     } catch (error) {
@@ -68,7 +61,7 @@ class AdvertisingController {
     const { id } = req.params
 
     try {
-      await this.advertisingService.deleteAdvertisingById(id)
+      await advertisingService.deleteAdvertisingById(id)
 
       return res.status(204).end()
     } catch (error) {

@@ -1,5 +1,4 @@
 const { prisma } = require("../config/dataBase.js")
-const prismaClient = require("@prisma/client")
 
 /**
  * @typedef {object} AdvertisingCreate

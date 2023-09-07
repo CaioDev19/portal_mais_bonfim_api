@@ -11,21 +11,15 @@ const { PostService } = require("./post.service")
  * @property {any} file
  */
 
+const postService = new PostService()
 class PostController {
-  /**
-   * @param {PostService} postService
-   */
-  constructor(postService) {
-    this.postService = postService
-  }
-
   async listPosts(req, res) {
     try {
-      const { limit, page, categoryId } = req.params
-      const posts = await this.postService.findPosts(
+      const { limit, page, categoryId } = req.query
+      const posts = await postService.findPosts(
         {
-          limit: +limit,
-          page: +page,
+          limit,
+          page,
         },
         categoryId ? +categoryId : null
       )
@@ -47,7 +41,7 @@ class PostController {
   async listPostsById(req, res) {
     try {
       const { id } = req.params
-      const post = await this.postService.findPostById(+id)
+      const post = await postService.findPostById(+id)
       return res.status(200).json(post)
     } catch (error) {
       if (error instanceof ApiError) {
@@ -64,7 +58,7 @@ class PostController {
 
   async createPost(req, res) {
     try {
-      const post = await this.postService.createPost({
+      const post = await postService.createPost({
         ...req.body,
         file: req.file,
       })
@@ -87,7 +81,7 @@ class PostController {
     const { id } = req.params
 
     try {
-      await this.postService.deletePostById(id)
+      await postService.deletePostById(id)
 
       res.status(204).end()
     } catch (error) {
@@ -107,7 +101,7 @@ class PostController {
     const { id } = req.params
 
     try {
-      await this.postService.updatePostById(id, {
+      await postService.updatePostById(id, {
         ...req.body,
         file: req.file,
       })
