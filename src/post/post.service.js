@@ -74,8 +74,6 @@ class PostService {
       /** @type {?number} */
       let count = null
 
-      console.log(categoryId)
-
       if (categoryId) {
         posts = await postRepository.findPostsPaginatedByCategoryId(
           {
@@ -163,7 +161,6 @@ class PostService {
 
       return this.formatPost(post)
     } catch (error) {
-      console.log(error)
       throw error
     }
   }
