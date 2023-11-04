@@ -29,11 +29,12 @@ model Post {
   imageName  String    @db.VarChar(255)
   imageUrl   String    @db.VarChar(255)
   title       String    @db.VarChar(255)
-  summary     String    @db.VarChar(255)
+  summary     String    
   content     String
   category_id Int
   date        DateTime? @db.Timestamptz(6)
   category    Category  @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "post_category_id_foreign")
 
   @@map("post")
+  @@index([category_id])
 }
